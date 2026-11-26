@@ -809,7 +809,7 @@ map.createPane('landPane').style.zIndex=150;
 L.geoJSON({type:'Feature',geometry:D.land},{pane:'landPane',interactive:false,style:{color:'#b9c6c0',weight:1,fillColor:'#f4f1e8',fillOpacity:1}}).addTo(map);
 const OSMA='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 const bases={
- 'Streets':L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19,attribution:OSMA+' &copy; <a href="https://carto.com/attributions">CARTO</a>'}),
+ 'Streets':L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:OSMA}),
  'Cycling':L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',{subdomains:'abc',maxZoom:19,attribution:'<a href="https://www.cyclosm.org">CyclOSM</a> | '+OSMA}),
  'Satellite':L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery &copy; Esri'}),
  'Plain':L.layerGroup()};
