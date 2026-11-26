@@ -706,7 +706,7 @@ header p{margin:8px 0 0;max-width:70ch;color:var(--band2)}
 .jn{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--path);transform:translate(-50%,-50%)}
 .me{width:18px;height:18px;border-radius:50%;background:#2563eb;box-shadow:0 0 0 4px #fff,0 0 0 9px rgba(37,99,235,.3);transform:translate(-50%,-50%)}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 8px}
-.panel h2{font-size:32px}.meta{color:var(--mute);font-size:14px;margin-top:4px}
+.panel h2{font-size:32px}.back{all:unset;cursor:pointer;color:var(--path);font-weight:600;font-size:15px;display:inline-flex;align-items:center;gap:4px;min-height:36px;margin:-6px 0 4px}.back:focus-visible{outline:3px solid var(--hot)}.meta{color:var(--mute);font-size:14px;margin-top:4px}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0}
 .stats div{border-top:3px solid var(--line);padding-top:6px;font-size:13px;color:var(--mute)}
 .stats b{display:block;color:var(--ink);font:700 26px/1.1 "Barlow Condensed",sans-serif;white-space:nowrap}
@@ -829,7 +829,7 @@ const Ctl=L.Control.extend({options:{position:'topleft'},onAdd(){const d=L.DomUt
  d.innerHTML=`<button id="bAll" title="Show all paths, Ventura to San Diego" aria-label="Show all paths">All</button><button id="bMe" title="Paths near me" aria-label="Find paths near me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>`;
  L.DomEvent.disableClickPropagation(d);return d}});
 new Ctl().addTo(map);
-$('#bAll').onclick=()=>{map.fitBounds(SOCAL,{padding:[6,6]})};$('#bMe').onclick=()=>nearMe();
+$('#bAll').onclick=()=>{clearSel();map.fitBounds(SOCAL,{padding:[6,6]})};$('#bMe').onclick=()=>nearMe();
 
 const icon=(html,cls='')=>L.divIcon({html,className:cls,iconSize:null});
 const dotHTML=c=>`<span class="dot ${c}">${c.toUpperCase()}</span>`;
@@ -863,12 +863,16 @@ function profile(t){const s=$('#prof');if(!s)return;const W=s.clientWidth,H=s.cl
   const tip=$('#tip');tip.style.display='block';tip.style.left=X(m)+'px';tip.style.top=Y(el)+'px';tip.textContent=`Mile ${m.toFixed(1)} · ${Math.round(el)} ft · ${gr>=0?'+':''}${gr.toFixed(1)}%`};
  s.onpointerleave=()=>{$('#tip').style.display='none';s.querySelector('#cur')?.setAttribute('visibility','hidden')}}
 
+const BACK='<button class="back" data-back aria-label="Back to all paths">← All paths</button>';
+function clearSel(){sel=null;selLoop=null;hl.clearLayers();mk.clearLayers();meL.clearLayers();dim(false);panel();renderLists();setHash(null)}
+const goHome=()=>{clearSel();home()};
+addEventListener('keydown',e=>{if(e.key==='Escape'&&(sel||selLoop))goHome()});
 const intro=()=>`<h2>Pick a path</h2><p class="note">Click any green line on the map, a suggested ride, or a path in the list below to see its route, elevation profile, parking and stops.</p><p class="note">Use the target button on the map to find paths near you. Use the layers button to switch between street, cycling and satellite maps.</p>`;
 function panel(){const p=$('#panel');
  if(selLoop)return loopPanel();
  const t=byId[sel];if(!t){p.innerHTML=intro();return}
  const dir=t.el[t.el.length-1]>=t.el[0]?'uphill':'downhill';
- p.innerHTML=`<h2>${esc(t.name)}</h2><div class="meta">${esc(t.county)} County · ${esc(t.surface)}</div>
+ p.innerHTML=BACK+`<h2>${esc(t.name)}</h2><div class="meta">${esc(t.county)} County · ${esc(t.surface)}</div>
  <div class="stats"><div><b>${t.miles} mi</b>one way</div><div><b>${t.gain} ft</b>climb A→B</div><div><b>${t.loss} ft</b>climb B→A</div><div><b>${t.avg}%</b>avg grade</div></div>
  <p class="ends"><b>A</b> <a href="${gm(t.ll[0])}" target="_blank" rel="noopener">${esc(t.start)}</a><br><b>B</b> <a href="${gm(t.ll[t.ll.length-1])}" target="_blank" rel="noopener">${esc(t.end)}</a></p>
  <p class="note">${esc(t.note)}</p>
@@ -884,10 +888,10 @@ function panel(){const p=$('#panel');
  p.querySelectorAll('.tog input').forEach(i=>i.onchange=()=>{show[i.dataset.t]=i.checked?1:0;try{localStorage.setItem('socal-show2',JSON.stringify(show))}catch(e){}panel();marks(t)});
  p.querySelectorAll('ol.stops li[data-i]').forEach(li=>{const go=()=>{const s=t.stops[+li.dataset.i];map.setView(s.p,15)};li.onclick=go;li.onkeydown=e=>{if(e.key==='Enter')go()}});
  bindLinks(p)}
-function bindLinks(p){p.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>select(b.dataset.go));p.querySelectorAll('[data-loop]').forEach(b=>b.onclick=()=>selectLoop(b.dataset.loop))}
+function bindLinks(p){p.querySelectorAll('[data-back]').forEach(b=>b.onclick=goHome);p.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>select(b.dataset.go));p.querySelectorAll('[data-loop]').forEach(b=>b.onclick=()=>selectLoop(b.dataset.loop))}
 
 function loopPanel(){const l=LP.find(x=>x.id===selLoop),p=$('#panel');
- p.innerHTML=`<h2>${esc(l.name)}</h2><div class="meta">${esc(l.kind)} · ${esc(l.region)}</div>
+ p.innerHTML=BACK+`<h2>${esc(l.name)}</h2><div class="meta">${esc(l.kind)} · ${esc(l.region)}</div>
  <div class="stats"><div><b>${l.miles} mi</b>total</div><div><b>${l.climb} ft</b>climbing</div><div><b>${l.legs.length}</b>paths</div><div><b>${l.gap?l.gap*(l.kind==='Out and back'?2:1)+' mi':'0 mi'}</b>on streets</div></div>
  <p class="note">${esc(l.note)}</p>${l.gapnote?`<p class="msg">${esc(l.gapnote)}</p>`:''}
  <h3 class="sub">Route</h3><ol class="stops">${l.legs.map((g,i)=>{const t=byId[g[0]];return `<li style="cursor:default"><span class="mm">${i+1}</span><span></span><span><button class="linkbtn" data-go="${t.id}">${esc(t.name)}</button><br><span class="sd">Mile ${+g[1].toFixed(1)} to mile ${+g[2].toFixed(1)} (${Math.abs(g[2]-g[1]).toFixed(1)} mi)</span></span></li>`}).join('')}</ol>
@@ -911,7 +915,7 @@ function nearMe(){const p=$('#panel');
   const res=T.map(t=>{let best=[1e9,0];for(let m=0;m<=t.miles;m+=0.1){const d=hav(me,at(t,m));if(d<best[0])best=[d,m]}return{t,d:best[0],m:best[1]}}).sort((a,b)=>a.d-b.d).slice(0,6);
   sel=null;selLoop=null;hl.clearLayers();mk.clearLayers();dim(false);renderLists();
   map.fitBounds(L.latLngBounds([me,...res.slice(0,3).map(r=>at(r.t,r.m))]),{padding:[40,40],maxZoom:13});
-  p.innerHTML=`<h2>Paths near you</h2><p class="meta">Straight-line distance to the closest point on each path.</p><ol class="stops">${res.map(r=>`<li style="cursor:default"><span class="mm">${r.d<10?r.d.toFixed(1):Math.round(r.d)} mi</span><span></span><span><button class="linkbtn" data-go="${r.t.id}">${esc(r.t.name)}</button><br><span class="sd">Closest at about mile ${r.m.toFixed(1)} · <a href="${gdir(at(r.t,r.m))}" target="_blank" rel="noopener">Directions</a></span></span></li>`).join('')}</ol>`;bindLinks(p)},
+  p.innerHTML=BACK+`<h2>Paths near you</h2><p class="meta">Straight-line distance to the closest point on each path.</p><ol class="stops">${res.map(r=>`<li style="cursor:default"><span class="mm">${r.d<10?r.d.toFixed(1):Math.round(r.d)} mi</span><span></span><span><button class="linkbtn" data-go="${r.t.id}">${esc(r.t.name)}</button><br><span class="sd">Closest at about mile ${r.m.toFixed(1)} · <a href="${gdir(at(r.t,r.m))}" target="_blank" rel="noopener">Directions</a></span></span></li>`).join('')}</ol>`;bindLinks(p)},
  err=>{p.innerHTML=intro()+`<p class="msg">Couldn't get your location${err.code===1?' (permission was denied)':''}. You can still pan the map or pick a region below.</p>`},{enableHighAccuracy:false,timeout:10000,maximumAge:300000})}
 
 function renderLists(){
