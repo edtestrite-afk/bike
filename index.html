@@ -127,7 +127,7 @@ const scaleMarks=()=>{const s=vb[2]/D.W;document.querySelectorAll('#marks .m').f
 const fit=(xs,ys,pad)=>{let a=Math.min(...xs)-pad,b=Math.max(...xs)+pad,c=Math.min(...ys)-pad,d=Math.max(...ys)+pad;
  const r=D.W/D.H;let w=b-a,h=d-c;if(w/h<r){const nw=h*r;a-=(nw-w)/2;w=nw}else{const nh=w/r;c-=(nh-h)/2;h=nh}
  if(w<40){const f=40/w;a-=(w*f-w)/2;c-=(h*f-h)/2;w*=f;h*=f}vb=[a,c,w,h];setVB()};
-const fitAll=()=>fit(T.flatMap(t=>t.xy.map(p=>p[0])),T.flatMap(t=>t.xy.map(p=>p[1])),40);
+const fitAll=()=>{vb=[0,0,D.W,D.H];setVB()};
 
 const zoom=(f,cx,cy)=>{cx??=vb[0]+vb[2]/2;cy??=vb[1]+vb[3]/2;const w=Math.min(Math.max(vb[2]*f,15),D.W*1.6),h=w*D.H/D.W;
  vb=[cx-(cx-vb[0])*w/vb[2],cy-(cy-vb[1])*h/vb[3],w,h];setVB()};
@@ -190,10 +190,10 @@ function panel(){const t=T.find(x=>x.id===sel),p=$('#panel');
  p.querySelectorAll('.tog input').forEach(i=>i.onchange=()=>{show[i.dataset.t]=i.checked?1:0;try{localStorage.setItem('socal-show',JSON.stringify(show))}catch(e){}panel();marks()});
  p.querySelectorAll('ol.stops li[data-i]').forEach(li=>{const go=()=>{const s=t.stops[+li.dataset.i];fit([s.p[0]],[s.p[1]],6)};li.onclick=go;li.onkeydown=e=>{if(e.key==='Enter')go()}})}
 
-function select(id,fromMap){sel=T.some(t=>t.id===id)?id:null;
+function select(id,fromMap,noZoom){sel=T.some(t=>t.id===id)?id:null;
  document.querySelectorAll('#paths polyline').forEach(p=>{p.setAttribute('stroke',p.dataset.id===sel?'var(--hot)':'var(--path)');p.setAttribute('stroke-opacity',sel&&p.dataset.id!==sel?'.55':'1')});
  const t=T.find(x=>x.id===sel);$('#hl').innerHTML=t?`<polyline points="${ptsStr(t)}" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" opacity=".9"/><polyline points="${ptsStr(t)}" fill="none" stroke="var(--hot)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`:'';
- if(t)fit(t.xy.map(p=>p[0]),t.xy.map(p=>p[1]),8);
+ if(t&&!noZoom)fit(t.xy.map(p=>p[0]),t.xy.map(p=>p[1]),8);
  marks();panel();list();
  if(sel&&location.hash!=='#'+sel)history.replaceState(null,'','#'+sel);
  if(fromMap&&innerWidth<900)$('#panel').scrollIntoView({behavior:'smooth',block:'start'})}
@@ -209,6 +209,6 @@ function list(){const q=$('#q').value.trim().toLowerCase(),rg=$('#reg').value,so
 ['q','reg','sort'].forEach(i=>$('#'+i).addEventListener('input',list));
 const ro=new ResizeObserver(()=>{const t=T.find(x=>x.id===sel);if(t)profile(t)});ro.observe($('#panel'));
 addEventListener('hashchange',()=>select(location.hash.slice(1)));
-fitAll();select(location.hash.slice(1)||'sgrt');
+fitAll();select(location.hash.slice(1),false,true);
 }
 </script></body></html>
